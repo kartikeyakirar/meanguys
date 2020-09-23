@@ -2,8 +2,6 @@ library(rjson)
 library(tidytext)
 
 fillColor = "#FFA07A"
-fillColor2 = "#F1C40F"
-fillColor3 = "#AED6F1"
 
 PATH_COMMENTS_1 = "input/comments1.json"
 
@@ -28,8 +26,6 @@ create_dataframe_comments <- function(comments_file)
 
 
 }
-
-
 
 
 comments_text = create_dataframe_comments(PATH_COMMENTS_1)
