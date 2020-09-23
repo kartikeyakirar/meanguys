@@ -1,9 +1,24 @@
 library(rjson)
 library(tidytext)
+library(tidyverse)
 
 fillColor = "#FFA07A"
 
-PATH_COMMENTS_1 = "input/comments1.json"
+PATH_COMMENTS_1 = "input/comments_recent.json"
+
+get_text <- function(x)
+{
+  if (length(x) == 0)
+  {
+    blank = ""
+    return (blank)
+  }
+
+  else
+  {
+    return (x$text)
+  }
+}
 
 
 create_dataframe_comments <- function(comments_file)
@@ -11,29 +26,24 @@ create_dataframe_comments <- function(comments_file)
 
   comments <- fromJSON(file = comments_file)
 
-  n <- length(comments)
+  comments_text <- sapply(comments,function(x) get_text(x))
+  comments_df = data.frame(Text=comments_text)
+  comments_df$Text = as.character(comments_df$Text)
 
-  df = data.frame(Text=comments[[1]]$text)
-
-  for(i in 2:n)
-  {
-    df2 = data.frame(Text=comments[[i]]$text)
-
-    df <- rbind(df,df2)
-  }
-
-  return(df)
+  return(comments_df)
 
 
 }
 
 
+
+
 comments_text = create_dataframe_comments(PATH_COMMENTS_1)
-comments_text$Text = as.character(comments_text$Text)
 
 createBarPlotCommonWords = function(train,title)
 {
   train %>%
+    filter(length(Text) > 0) %>%
     unnest_tokens(word, Text) %>%
     filter(!word %in% stop_words$word) %>%
     count(word,sort = TRUE) %>%
@@ -55,3 +65,4 @@ createBarPlotCommonWords = function(train,title)
 }
 
 createBarPlotCommonWords(comments_text,'Top 10 most Common Words')
+
