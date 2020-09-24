@@ -21,7 +21,7 @@ library(tm)
 #saveRDS(stories, file = "stories.RDS")
 
 # Read the stories RDS object. Last retrieved 202009240843JST
-stories <- readRDS("stories.RDS")
+stories <- readRDS("data/stories.RDS")
 
 # Get ids
 ids <- lapply(stories, function(id) id$id) %>%
@@ -34,7 +34,7 @@ ids <- lapply(stories, function(id) id$id) %>%
 #saveRDS(comments, file = "comments.RDS")
 
 # A bunch of tibbles.
-comments <- readRDS("comments.RDS")
+comments <- readRDS("data/comments.RDS")
 
 # I want them flat. This flattens all comments into one string.
 # For loop - sorry! D:
@@ -141,8 +141,16 @@ tidy_hn <- tidy_hn %>%
 # This drops a doc. Maybe it was
 # all stopwords?
 data(stop_words)
+my_stopwords <- c("www","https","quot","gt","nofollow",
+                  "href","rel","org")
+stop_words <- stop_words %>%
+  add_row(word = my_stopwords, lexicon = "Custom", .before = 1)
 tidy_hn <- tidy_hn %>%
   anti_join(stop_words)
+
+df <- tibble(x = 1:3, y = 3:1)
+
+df %>% add_row(x = 4, y = 0)
 
 # Put it intto a DTM for LDA
 dtm_hn <- tidy_hn %>%
@@ -155,7 +163,7 @@ k = ceiling(sqrt(dtm_hn$nrow)*2)
 # 10 min runtime
 #hn_lda <- LDA(dtm_hn, k = k, control = list(seed = 24601))
 #saveRDS(hn_lda, "hn_lda.RDS")
-hn_lda <- readRDS("hn_lda.RDS")
+hn_lda <- readRDS("data/hn_lda.RDS")
 
 # Explore
 hn_topics <- tidy(hn_lda, matrix = "beta")
@@ -172,6 +180,8 @@ hn_top_terms %>%
   geom_col(show.legend = FALSE) +
   facet_wrap(~ topic, scales = "free") +
   coord_flip()
+
+
 
 #####
 #ok
