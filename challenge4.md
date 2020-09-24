@@ -40,6 +40,8 @@ Because the LDA with k = 45 revealed 8 topics, let's look at top terms with k = 
 <img src="https://github.com/kartikeyakirar/meanguys/tree/challenge4/img/top_words_per_topics8.png"
 alt="Top Terms by Topic" />
 
+![Image of k8](https://github.com/kartikeyakirar/meanguys/tree/challenge4/img/top_words_per_topics8.png)
+
 If we break that down we can sort things into just four topics.
 ### Technology (Topics 2, 5, 7)
 ### Politics (Topics 1, 3)
