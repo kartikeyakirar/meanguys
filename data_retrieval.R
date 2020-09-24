@@ -8,6 +8,7 @@ library(urltools)
 library(topicmodels)
 library(rvest)
 library(tm)
+library(lexRankr)
 
 
 # Read in data and make a df.
@@ -204,7 +205,7 @@ hn_top_terms %>%
 # Let's run the LDA again to see if they appear more naturally.
 #hn_lda2 <- LDA(dtm_hn, k = 8, control = list(seed = 24601))
 #saveRDS(hn_lda2, "data/hn_lda2.RDS")
-readRDS("data/hn_lda2.RDS")
+hn_lda2 <- readRDS("data/hn_lda2.RDS")
 
 hn_topics2 <- tidy(hn_lda2, matrix = "beta")
 
@@ -231,7 +232,7 @@ hn_top_terms2 %>%
 # Let's run the LDA again to see if they appear more naturally.
 #hn_lda3 <- LDA(dtm_hn, k = 4, control = list(seed = 24601))
 #saveRDS(hn_lda3, "data/hn_lda3.RDS")
-readRDS("data/hn_lda3.RDS")
+hn_lda3 <- readRDS("data/hn_lda3.RDS")
 
 hn_topics3 <- tidy(hn_lda3, matrix = "beta")
 
@@ -304,15 +305,40 @@ hn_documents.df <- rbind(hn_documents.df, c(mydf$id[469], NA, NA))
 names(hn_documents.df) <- c("id", "topic", "gamma")
 mydf <- merge(mydf, hn_documents.df, by = "id")
 
-# Get the popularity
+# Get the popularity of topics in terms of points and comments
+mydf[c('topic','num_comments','score')] %>%
+  na.omit() %>%
+  ggplot(aes(num_comments, score, fill = factor(topic))) +
+  geom_col(show.legend = TRUE) +
+  facet_wrap(~ topic, scales = "free")
 
+mydf[c('topic','score')] %>%
+  na.omit() %>%
+  ggplot(aes(topic, score)) +
+  geom_col()
 
-
-
-
+mydf[c('topic','num_comments')] %>%
+  na.omit() %>%
+  ggplot(aes(topic, num_comments)) +
+  geom_col()
 #####
 
 # Popular Topics in Terms of Points & Comments
+#####
+
+# Use lexRank to summarize the comments of the same topic
+tech_summary <- lexRank(
+  mydf$title[which(mydf$topic == "Technology")],
+  n = 5,
+  sentencesAsDocs = TRUE)
+#test <- lexRank(covid_df$raw_text[1],
+#                docId = "create",
+#                n = 5,
+#                sentencesAsDocs = TRUE,
+#                returnTies = FALSE,
+#                Verbose = FALSE)
+
+#####
 
 
 
