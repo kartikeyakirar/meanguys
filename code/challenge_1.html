@@ -757,14 +757,9 @@ fits %&gt;%
             select(-comp_day) %&gt;%
             summarise(mean = mean(value)) %&gt;%
             mutate(model = &quot;day_mean&quot;)) %&gt;%
-  arrange(model, name) -&gt; results</code></pre>
-<pre class="r"><code>print(results)
+  arrange(model, name) -&gt; results
 
-results %&gt;%
-  filter(model == &quot;ets&quot;) %&gt;%
-  select(-model) %&gt;%
-  write.csv(&quot;../deliverables/MeanGuys_prediction_challenge_1.csv&quot;,
-            row.names = FALSE)</code></pre>
+print(results)</code></pre>
 <pre><code>## # A tibble: 12 x 3
 ##    name       model           mean
 ##    &lt;chr&gt;      &lt;chr&gt;          &lt;dbl&gt;
@@ -780,6 +775,21 @@ results %&gt;%
 ## 10 comments   ets             89.4
 ## 11 max_points ets           1020. 
 ## 12 score      ets            139.</code></pre>
+<pre class="r"><code>results %&gt;%
+  filter(model == &quot;ets&quot;) %&gt;%
+  select(-model) -&gt; final_predictions
+  
+print(final_predictions)
+
+write.csv(final_predictions,
+          &quot;../deliverables/MeanGuys_prediction_challenge_1.csv&quot;,
+          row.names = FALSE)</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   name         mean
+##   &lt;chr&gt;       &lt;dbl&gt;
+## 1 comments     89.4
+## 2 max_points 1020. 
+## 3 score       139.</code></pre>
 
 
 
