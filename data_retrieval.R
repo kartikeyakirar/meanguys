@@ -27,6 +27,9 @@ stories <- readRDS("data/stories.RDS")
 ids <- lapply(stories, function(id) id$id) %>%
   unlist()
 
+# Get scores
+scores <- lapply(stories, function(score) score$score) %>% unlist()
+
 # Get comments
 # 15 min runtime
 #comments <- lapply(ids, get_item_by_id)
@@ -49,6 +52,9 @@ flat_comments <-lapply(flat_comments, function(comment) comment) %>%
   str_replace_all('[^A-Z|a-z]', ' ') %>% 
   str_replace_all('\\s\\s*', ' ') %>% 
   str_to_upper()
+
+# How many comments are there?
+num_comments <- lapply(comments, length) %>% unlist
 
 # I think that the topics for the stories are stored:
 # 1) The title of the story (written by the user)
@@ -112,6 +118,8 @@ mydf <- data.frame(id = ids,
                    full_url = full_urls,
                    title = titles,
                    comment = flat_comments,
+                   num_comments = num_comments,
+                   score = scores,
                    stringsAsFactors = FALSE)
 
 # It is pretty unrealistic to scrape such a variety of
@@ -240,9 +248,72 @@ hn_top_terms3 %>%
   facet_wrap(~ topic, scales = "free") +
   coord_flip()
 
-# 
+#This leaves us with:
+### Topic 1: Politics
+### Topic 2: Technology
+### Topic 3: Other
+### Topic 4: Environment
+
+# If you check these the k = 4 topics don't make
+# sense for some of the documents in them. It is
+# too specific and is forcing documents into groups
+# where they don't necessarily belong
+#Let's stick to the  k = 8 topic model.
+#hn_documents <- tidy(hn_lda2, matrix = "gamma")
+#hn_documents %>%
+#  arrange(desc(gamma))
+
+#hn_documents <- tidy(hn_lda3, matrix = "gamma")
+#hn_documents %>%
+#  arrange(desc(gamma))
+
+#tidy(dtm_hn) %>%
+#  filter(document == 24568719) %>%
+#  arrange(desc(count))
+
+# Assign a topic to each document and coerce the
+# topics into tehcnology, politics, energy, and legal.
+hn_documents <- tidy(hn_lda2, matrix = "gamma")
+hn_documents %>%
+  arrange(desc(gamma))
+
+# Get the max gamma topic for each document.
+hn_documents <- hn_documents %>%
+  group_by(document) %>%
+  top_n(1, gamma)
+
+# I want a regular dataframe.
+hn_documents.df <- data.frame(hn_documents)
+
+hn_documents.df$topic[hn_documents.df$topic == 1] <- "Politics"
+hn_documents.df$topic[hn_documents.df$topic == 2] <- "Technology"
+hn_documents.df$topic[hn_documents.df$topic == 3] <- "Politics"
+hn_documents.df$topic[hn_documents.df$topic == 4] <- "Energy"
+hn_documents.df$topic[hn_documents.df$topic == 5] <- "Technology"
+hn_documents.df$topic[hn_documents.df$topic == 6] <- "Legal"
+hn_documents.df$topic[hn_documents.df$topic == 7] <- "Technology"
+hn_documents.df$topic[hn_documents.df$topic == 8] <- "Energy"
+
+# There is a missing document number that was lost when
+# we did the anti_join. I am not sure why it was lost
+# but it needs to be accounted for.
+which(mydf$id %in% hn_documents.df$document == FALSE) # 469
+hn_documents.df <- rbind(hn_documents.df, c(mydf$id[469], NA, NA))
+
+# Merge the data. Now you have a topic in mydf.
+names(hn_documents.df) <- c("id", "topic", "gamma")
+mydf <- merge(mydf, hn_documents.df, by = "id")
+
+# Get the popularity
+
+
+
 
 
 #####
 
 # Popular Topics in Terms of Points & Comments
+
+
+
+

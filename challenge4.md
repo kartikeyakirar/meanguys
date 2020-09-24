@@ -40,8 +40,6 @@ Because the LDA with k = 45 revealed 8 topics, let's look at top terms with k = 
 <img src="https://github.com/kartikeyakirar/meanguys/tree/challenge4/img/top_words_per_topics8.png"
 alt="Top Terms by Topic" />
 
-![Image of k8](https://github.com/kartikeyakirar/meanguys/tree/challenge4/img/top_words_per_topics8.png)
-
 If we break that down we can sort things into just four topics.
 ### Technology (Topics 2, 5, 7)
 ### Politics (Topics 1, 3)
@@ -53,13 +51,17 @@ Again, let's reduce k and let k = 4.
 <img src="https://github.com/kartikeyakirar/meanguys/tree/challenge4/img/top_words_per_topics4.png"
 alt="Top Terms by Topic" />
 
-This leaves us with:
-### Topic 1: Politics
-### Topic 2: Technology
-### Topic 3: Other
-### Topic 4: Environment
+We could group this into politics, tech, environment, and other, but I think that this is forcing documents into groups where they don't belong. We will continue with the k = 8 model, but we will coerce the numbered topics into semantic topics that we have chosen (tehcnology, politics, energy, and legal).
 
 # Topic Popularity
+
+By far the most popular topic is "Technology" with "Energy" and "Politics" neck and neck for the second most popular. However, politics has more comments relative to its score, this implies that there is lots of discussion perhaps from dissenting users who are commenting but not "upvoting."
+
+<img src="https://github.com/kartikeyakirar/meanguys/tree/challenge4/img/num_comments_topic.png"
+alt="Top Terms by Topic" />
+
+<img src="https://github.com/kartikeyakirar/meanguys/tree/challenge4/img/score_topic.png"
+alt="Top Terms by Topic" />
 
 
 
