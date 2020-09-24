@@ -164,8 +164,10 @@ k = ceiling(sqrt(dtm_hn$nrow)*2)
 #hn_lda <- LDA(dtm_hn, k = k, control = list(seed = 24601))
 #saveRDS(hn_lda, "hn_lda.RDS")
 hn_lda <- readRDS("data/hn_lda.RDS")
+#####
 
-# Explore
+# Explore Key Topics
+#####
 hn_topics <- tidy(hn_lda, matrix = "beta")
 
 hn_top_terms <- hn_topics %>%
@@ -181,7 +183,66 @@ hn_top_terms %>%
   facet_wrap(~ topic, scales = "free") +
   coord_flip()
 
+# I identified these 8 topics:
+### Technology (Topics 5, 10, 15, 16, 17, 18, 21, 22, 23, 25, 26, 27, 29, 32, 33, 34, 35, 40, 41, 43, 44, 45)
+### Politics (Topics 1, 2, 3, 9, 11, 20, 25, 28, 31, 36, 37)
+### Energy / Environment (Topics 7, 38, 39, 42)
+### Science (Topics 4, 8, 13, 14)
+### Cars (Topics 24, 38, 39)
+### Internet Community (Topics 6, 12)
+### Legal (Topics 30, 33)
+### Literature (Topic 19)
+
+# Let's run the LDA again to see if they appear more naturally.
+#hn_lda2 <- LDA(dtm_hn, k = 8, control = list(seed = 24601))
+#saveRDS(hn_lda2, "data/hn_lda2.RDS")
+readRDS("data/hn_lda2.RDS")
+
+hn_topics2 <- tidy(hn_lda2, matrix = "beta")
+
+hn_top_terms2 <- hn_topics2 %>%
+  group_by(topic) %>%
+  top_n(10, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+hn_top_terms2 %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip()
+
+# If we break that down we can sort things into just four topics.
+### Technology (Topics 2, 5, 7)
+### Politics (Topics 1, 3)
+### Energy (Topics 4, 8)
+### Legal (Topic 6)
+
+# Let's see what happens with k = 4
+# Let's run the LDA again to see if they appear more naturally.
+#hn_lda3 <- LDA(dtm_hn, k = 4, control = list(seed = 24601))
+#saveRDS(hn_lda3, "data/hn_lda3.RDS")
+readRDS("data/hn_lda3.RDS")
+
+hn_topics3 <- tidy(hn_lda3, matrix = "beta")
+
+hn_top_terms3 <- hn_topics3 %>%
+  group_by(topic) %>%
+  top_n(10, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+hn_top_terms3 %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip()
+
+# 
 
 
 #####
-#ok
+
+# Popular Topics in Terms of Points & Comments
