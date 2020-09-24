@@ -1,0 +1,234 @@
+---
+title: "WhyR Hackaton - Challenge 1"
+author: "MeanGuys"
+output: 
+  html_document: 
+    toc: yes
+    toc_depth: 2
+    theme: cosmo
+    df_print: kable
+---
+
+```{r setup, message = FALSE, collapse = TRUE, strip.white = TRUE}
+
+knitr::opts_chunk$set(results = "hold", message = FALSE, strip.white = TRUE, warning = FALSE)
+
+load_ibraries <- c("tidyverse", "rvest", "jsonlite", "tidyjson", "lubridate", 
+                   "magrittr", "hackeRnews", "R.utils", "tsibble","feasts", "fable")
+installed_libraries <- load_ibraries[!load_ibraries %in% installed.packages()]
+
+for(lib in installed_libraries) 
+	install.packages(lib, dependences = TRUE)
+
+sapply(load_ibraries, require, character = TRUE)
+
+
+```
+
+```{r functions}
+
+capwords <- function(s, strict = FALSE) 
+{
+    cap <- function(s) paste(toupper(substring(s, 1, 1)),
+                  {s <- substring(s, 2); if(strict) tolower(s) else s},
+                             sep = "", collapse = " " )
+    sapply(strsplit(s, split = " "), cap, USE.NAMES = !is.null(names(s)))
+}
+
+```
+
+
+```{r dataImport, warning=TRUE}
+
+articles <- fromJSON(readLines("../data/articles.json"), flatten = TRUE)
+articles_df <- as_tibble(lapply(select(articles, -kids, -title, -id, -type), as.character))
+
+articles_df %<>% rename(comments = descendants)
+
+```
+
+```{r dayOfPrognosis}
+
+compDay <- ymd_hm("2020-09-25 00:00")
+compWeekday <- wday(compDay, 
+                    week_start = getOption("lubridate.week.start", 1),
+                    locale = "English",
+                    label = TRUE)
+
+```
+
+
+```{r str}
+
+str(articles_df)
+
+```
+
+```{r colModification}
+
+articles_df$comments %<>% as.integer()
+articles_df$score    %<>% as.integer() 
+articles_df$time     %<>% ymd_hms()
+articles_df$by       %<>% factor()
+
+```
+
+```{r newCols}
+
+articles_df %<>%
+    mutate(weekday = wday(time, 
+                          week_start = getOption("lubridate.week.start", 1),
+                          locale = "English",
+                          label = TRUE),
+           day = day(time),
+           month = month(time, 
+                         locale = "English",
+                         label = TRUE),
+           main_url = str_match(url, "(https?://w{0,3}\\.?)(.*?)(\\.[A-z]*/|$)")[,3]) %>%
+  mutate(comp_day = (weekday == compWeekday))
+
+articles_df %>%
+  transmute(comments = comments, score = score, day = date(time)) %>%
+  group_by(day) %>%
+  summarise(across(.cols = everything(), mean)) %>%
+  pivot_longer(!day) %>%
+  mutate(comp_day = (wday(compDay) == wday(day))) %>%
+  as_tsibble(index = day, key = name)-> articles_summarized
+  
+
+head(articles_df)
+
+```
+
+```{r histograms}
+
+c("comments", "score") %>%
+    sapply(
+        function(X)
+        {
+            ggplot(articles_df) +
+            geom_histogram(aes(x = get(X)),
+                           alpha = 0.5) +
+            labs(x = capwords(X),
+                 y = "Count",
+                 title = "Interaction distribution") +
+            scale_x_log10()
+        },
+        simplify = FALSE,
+        USE.NAMES = TRUE
+    ) -> histograms
+
+histograms
+
+```
+
+
+```{r compHistograms}
+
+c("comments", "score") %>%
+    sapply(
+        function(X)
+        {
+            articles_df %>%
+            # filter(weekday == compWeekday) %>%
+            ggplot() +
+            geom_histogram(aes(x = get(X),
+                               y = ..density..,
+                               fill = comp_day),
+                           alpha = 0.5,
+                           ) +
+            labs(x = capwords(X),
+                 y = "Density",
+                 title = "Interaction distribution") +
+            guides(fill = "none") +
+            scale_x_log10() +
+            facet_grid(.~comp_day,
+                       labeller = label_both)
+        },
+        simplify = FALSE,
+        USE.NAMES = TRUE
+    ) -> compHistograms
+
+compHistograms
+
+```
+
+```{r timeSeries}
+
+autoplot(articles_summarized)
+
+articles_summarized %>%
+  ACF() %>% 
+  autoplot()
+
+```
+
+
+```{r SMA}
+
+articles_summarized %>%
+  select(-comp_day) %>%
+  group_by(name) %>%
+  model(ets = ETS(value),
+        arima = ARIMA(value)) -> ts_models
+
+ts_models %>%
+  accuracy()
+
+# ts_models %>%
+#   augment()
+
+forecast(ts_models, h = "14 days") -> fits
+
+fits %>%
+  autoplot(articles_summarized %>%
+             filter(day > today()-30))
+
+```
+
+
+```{r EDA}
+
+articles_df %>%
+    select(where(is.integer)) %>%
+    colnames() %>%
+    sapply(
+        function(X)
+        {
+            list(targeting = 
+                    ggplot(pilot) +
+                    geom_bar(aes(x = get(X), 
+                                 y = ..prop..,
+                                 fill = purchase,
+                                 colour = purchase),
+                             alpha = 0.25,
+                             position = "identity") +
+                    labs(x = X,
+                         y = "Density",
+                         title = "Decomposition wrt purchase") +
+                    facet_grid(cols = vars(campaign), labeller = label_both) +
+                    theme(legend.position = c(0.9, 0.8)),
+                 complete = 
+                    ggplot(pilot) +
+                    geom_bar(aes(x = get(X),
+                                 y = ..prop..),
+                             alpha = 0.25,
+                             colour = "black") +
+                    geom_density(aes(x = get(X)),
+                                 alpha = 0.5) +
+                    labs(x = X,
+                         title = "Complete decomposition") +
+                    facet_grid(rows = vars(purchase), 
+                               cols = vars(campaign), 
+                               labeller = label_both)
+                 )
+        },
+        simplify = FALSE,
+        USE.NAMES = TRUE
+    ) -> discretePlotList
+
+
+
+```
+
+
