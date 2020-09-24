@@ -331,12 +331,19 @@ tech_summary <- lexRank(
   mydf$title[which(mydf$topic == "Technology")],
   n = 5,
   sentencesAsDocs = TRUE)
-#test <- lexRank(covid_df$raw_text[1],
-#                docId = "create",
-#                n = 5,
-#                sentencesAsDocs = TRUE,
-#                returnTies = FALSE,
-#                Verbose = FALSE)
+pol_summary <- lexRank(
+  mydf$title[which(mydf$topic == "Politics")],
+  n = 5,
+  sentencesAsDocs = TRUE)
+energy_summary <- lexRank(
+  mydf$title[which(mydf$topic == "Energy")],
+  n = 5,
+  sentencesAsDocs = TRUE)
+legal_summary <- lexRank(
+  mydf$title[which(mydf$topic == "Legal")],
+  n = 5,
+  sentencesAsDocs = TRUE)
+
 
 #####
 
