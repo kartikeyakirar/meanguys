@@ -37,7 +37,6 @@ capwords <- function(s, strict = FALSE)
 
 ```
 
-
 ```{r dataImport, warning=TRUE}
 
 articles <- fromJSON(readLines("../data/articles.json"), flatten = TRUE)
@@ -90,12 +89,13 @@ articles_df %<>%
 articles_df %>%
   transmute(comments = comments, score = score, day = date(time)) %>%
   group_by(day) %>%
-  summarise(across(.cols = everything(), mean)) %>%
+  summarise(max_points = max(score),
+            comments = mean(comments),
+            score = mean(score)) %>%
   pivot_longer(!day) %>%
   mutate(comp_day = (wday(compDay) == wday(day))) %>%
   as_tsibble(index = day, key = name)-> articles_summarized
   
-
 head(articles_df)
 
 ```
@@ -155,7 +155,13 @@ compHistograms
 
 ```{r timeSeries}
 
-autoplot(articles_summarized)
+articles_summarized %>%
+  filter(name != "max_points") %>%
+  autoplot()
+
+articles_summarized %>%
+  filter(name == "max_points") %>%
+  autoplot()
 
 articles_summarized %>%
   ACF() %>% 
@@ -187,48 +193,40 @@ fits %>%
 ```
 
 
-```{r EDA}
+```{r results}
 
-articles_df %>%
-    select(where(is.integer)) %>%
-    colnames() %>%
-    sapply(
-        function(X)
-        {
-            list(targeting = 
-                    ggplot(pilot) +
-                    geom_bar(aes(x = get(X), 
-                                 y = ..prop..,
-                                 fill = purchase,
-                                 colour = purchase),
-                             alpha = 0.25,
-                             position = "identity") +
-                    labs(x = X,
-                         y = "Density",
-                         title = "Decomposition wrt purchase") +
-                    facet_grid(cols = vars(campaign), labeller = label_both) +
-                    theme(legend.position = c(0.9, 0.8)),
-                 complete = 
-                    ggplot(pilot) +
-                    geom_bar(aes(x = get(X),
-                                 y = ..prop..),
-                             alpha = 0.25,
-                             colour = "black") +
-                    geom_density(aes(x = get(X)),
-                                 alpha = 0.5) +
-                    labs(x = X,
-                         title = "Complete decomposition") +
-                    facet_grid(rows = vars(purchase), 
-                               cols = vars(campaign), 
-                               labeller = label_both)
-                 )
-        },
-        simplify = FALSE,
-        USE.NAMES = TRUE
-    ) -> discretePlotList
-
-
+bind_rows(fits %>%
+            filter(day == compDay) %>%
+            as_tibble() %>%
+            select(-value, -day) %>%
+            rename_with(~ gsub(".", "", .x, fixed = TRUE), starts_with(".")),
+          articles_summarized %>%
+            as_tibble() %>%
+            group_by(name, comp_day) %>%
+            summarise(mean = mean(value)) %>%
+            filter(comp_day) %>%
+            select(-comp_day) %>%
+            mutate(model = "comp_day_mean"),
+          articles_summarized %>%
+            as_tibble() %>%
+            group_by(name) %>%
+            select(-comp_day) %>%
+            summarise(mean = mean(value)) %>%
+            mutate(model = "day_mean")) %>%
+  arrange(model, name) -> results
 
 ```
 
+```{r finalPrint}
+
+print(results)
+
+results %>%
+  filter(model == "ets") %>%
+  select(-model) %>%
+  write.csv("../deliverables/MeanGuys_prediction_challenge_1.csv",
+            row.names = FALSE)
+
+
+```
 
