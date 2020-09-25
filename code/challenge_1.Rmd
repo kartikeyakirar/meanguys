@@ -92,8 +92,8 @@ articles_df %>%
   transmute(comments = comments, score = score, day = date(time)) %>%
   group_by(day) %>%
   summarise(max_points = max(score),
-            comments = mean(comments),
-            score = mean(score)) %>%
+            comments = sum(comments),
+            number = n()) %>%
   pivot_longer(!day) %>%
   mutate(comp_day = (wday(compDay) == wday(day))) %>%
   as_tsibble(index = day, key = name)-> articles_summarized
@@ -158,11 +158,11 @@ compHistograms
 ```{r timeSeries}
 
 articles_summarized %>%
-  filter(name != "max_points") %>%
+  filter(name != "number") %>%
   autoplot()
 
 articles_summarized %>%
-  filter(name == "max_points") %>%
+  filter(name == "number") %>%
   autoplot()
 
 articles_summarized %>%

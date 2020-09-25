@@ -80,8 +80,8 @@ articles_df %>%
   transmute(comments = comments, score = score, day = date(time)) %>%
   group_by(day) %>%
   summarise(max_points = max(score),
-            comments = mean(comments),
-            score = mean(score)) %>%
+            comments = sum(comments),
+            number = n()) %>%
   pivot_longer(!day) %>%
   mutate(comp_day = (wday(compDay) == wday(day))) %>%
   as_tsibble(index = day, key = name)-> articles_summarized
@@ -162,7 +162,7 @@ compHistograms
 
 ``` r
 articles_summarized %>%
-  filter(name != "max_points") %>%
+  filter(name != "number") %>%
   autoplot()
 ```
 
@@ -170,7 +170,7 @@ articles_summarized %>%
 
 ``` r
 articles_summarized %>%
-  filter(name == "max_points") %>%
+  filter(name == "number") %>%
   autoplot()
 ```
 
@@ -207,14 +207,14 @@ fits %>%
 ![](challenge_1_files/figure-gfm/SMA-1.png)<!-- -->
 
     ## # A tibble: 6 x 10
-    ##   name       .model .type         ME  RMSE    MAE    MPE  MAPE  MASE     ACF1
-    ##   <chr>      <chr>  <chr>      <dbl> <dbl>  <dbl>  <dbl> <dbl> <dbl>    <dbl>
-    ## 1 comments   ets    Training   0.375  11.8   9.26  -1.30 10.9  0.702  0.109  
-    ## 2 comments   arima  Training   0.816  13.2  10.4   -1.23 12.3  0.789  0.0104 
-    ## 3 max_points ets    Training -28.5   548.  409.   -20.0  40.8  0.729  0.136  
-    ## 4 max_points arima  Training   0.397 547.  401.   -20.4  40.4  0.714  0.00238
-    ## 5 score      ets    Training  -1.02   19.1  14.7   -2.17  9.89 0.689  0.0980 
-    ## 6 score      arima  Training   0.514  21.0  16.2   -1.58 10.8  0.757 -0.00540
+    ##   name       .model .type          ME   RMSE     MAE     MPE  MAPE  MASE    ACF1
+    ##   <chr>      <chr>  <chr>       <dbl>  <dbl>   <dbl>   <dbl> <dbl> <dbl>   <dbl>
+    ## 1 comments   ets    Training  19.5    1257.   954.    -6.18   17.3 0.729 0.0722 
+    ## 2 comments   arima  Training 166.     1518.  1173.    -1.66   17.2 0.896 0.00569
+    ## 3 max_points ets    Training -28.5     548.   409.   -20.0    40.8 0.729 0.136  
+    ## 4 max_points arima  Training   0.397   547.   401.   -20.4    40.4 0.714 0.00238
+    ## 5 number     ets    Training  -0.0136   11.4    8.42  -4.46   13.0 0.746 0.0448 
+    ## 6 number     arima  Training   1.10     13.2    9.43  -0.487  11.7 0.836 0.147
 
 ``` r
 bind_rows(fits %>%
@@ -243,18 +243,18 @@ print(results)
     ## # A tibble: 12 x 3
     ##    name       model           mean
     ##    <chr>      <chr>          <dbl>
-    ##  1 comments   arima           91.2
+    ##  1 comments   arima         7822. 
     ##  2 max_points arima         1124. 
-    ##  3 score      arima          143. 
-    ##  4 comments   comp_day_mean   88.6
+    ##  3 number     arima           84.4
+    ##  4 comments   comp_day_mean 7929. 
     ##  5 max_points comp_day_mean 1007. 
-    ##  6 score      comp_day_mean  152. 
-    ##  7 comments   day_mean        85.9
+    ##  6 number     comp_day_mean   90.2
+    ##  7 comments   day_mean      7578. 
     ##  8 max_points day_mean      1131. 
-    ##  9 score      day_mean       153. 
-    ## 10 comments   ets             89.4
+    ##  9 number     day_mean        87.6
+    ## 10 comments   ets           7610. 
     ## 11 max_points ets           1020. 
-    ## 12 score      ets            139.
+    ## 12 number     ets             85.6
 
 ``` r
 results %>%
@@ -271,6 +271,6 @@ write.csv(final_predictions,
     ## # A tibble: 3 x 2
     ##   name         mean
     ##   <chr>       <dbl>
-    ## 1 comments     89.4
+    ## 1 comments   7610. 
     ## 2 max_points 1020. 
-    ## 3 score       139.
+    ## 3 number       85.6
